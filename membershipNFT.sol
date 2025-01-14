@@ -9,39 +9,58 @@
 */
 pragma solidity  >=0.7.0 <0.9.0;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-abstract contract MembershipNFT is ERC721, IERC721Enumerable, Ownable{
-    
+contract MembershipNFT is ERC721, Ownable{
+    //Errors
+    error MembershipInsufficientBalance();
+
+    //Events
+    event NewMembershipMinted(address indexed to, uint256 tokenID, MembershipLevel level);
+
+
+    //Variables
     uint256 private _currentTokenId;
     enum MembershipLevel {Bronze, Silver, Gold}
-
-    mapping (uint256 tokenID => MembershipLevel) public membershipLevels;
-    // mapping (uint256 tokenID => uint256 expiration) public membershipExpiration
 
     uint256 bronzePrice = 0.01 ether;
     uint256 silverPrice = 0.1 ether;
     uint256 goldPrice = 0.5 ether;
 
-    constructor() ERC721("Conquer Membership","CQM") Ownable(msg.sender){
+    mapping (uint256 tokenID => MembershipLevel) public membershipLevels;
+    mapping (uint256 tokenID => uint256 expiration) public membershipExpiration;
+    
+
+    constructor() ERC721("Membership","MSP") Ownable(msg.sender){
         _currentTokenId = 0;
     }
 
-    // function mintConquerMembership (MembershipLevel level) external payable 
-    // {
-    //     uint256 price = getPriceForLevel(level);
-    // }
+    function mintMembership (MembershipLevel level) external payable 
+    {
+        uint256 price = getPriceForLevel(level);
+
+        if (msg.value < price){
+            revert MembershipInsufficientBalance();
+        }
+
+        _currentTokenId = _currentTokenId + 1;
+
+        _safeMint(msg.sender, _currentTokenId);
+        membershipLevels[_currentTokenId] = level;
+        membershipExpiration[_currentTokenId] = block.timestamp + 365 days;
+
+        emit NewMembershipMinted (msg.sender, _currentTokenId, level);
+    }
 
     function getPriceForLevel (MembershipLevel _level) public view returns (uint256) {
         if (_level == MembershipLevel.Gold){
             return goldPrice;
-        }else if (_level == MembershipLevel.Silver){
+        } else if (_level == MembershipLevel.Silver){
             return silverPrice;
-        }else {
+        } else {
             return bronzePrice;
         }
     }
-
 }
