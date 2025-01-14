@@ -16,9 +16,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MembershipNFT is ERC721, Ownable{
     //Errors
     error MembershipInsufficientBalance();
+    error MembershipNonExistentToken();
+    error MembershipNotTheOwner();
 
     //Events
     event NewMembershipMinted(address indexed to, uint256 tokenID, MembershipLevel level);
+    event MembershipRenewed(address indexed to, uint256 tokenID, MembershipLevel level, uint256 expiration);
 
 
     //Variables
@@ -54,6 +57,30 @@ contract MembershipNFT is ERC721, Ownable{
         emit NewMembershipMinted (msg.sender, _currentTokenId, level);
     }
 
+    
+
+    function renewMembership(uint256 tokenID) external payable
+    {
+        if (!_exists(tokenID)){
+            revert MembershipNonExistentToken();
+        }
+        if (ownerOf(tokenID) != msg.sender){
+            revert MembershipNotTheOwner();
+        }
+
+        MembershipLevel level = membershipLevels[tokenID];
+        uint256 price = getPriceForLevel(level);
+
+        if (msg.value < price) {
+            revert MembershipInsufficientBalance();
+        }
+
+        uint256 newExpirationData = membershipExpiration[tokenID] + 256 days;
+        membershipExpiration[tokenID] = newExpirationData;
+
+        emit MembershipRenewed(msg.sender, tokenID, level, newExpirationData);
+    }
+
     function getPriceForLevel (MembershipLevel _level) public view returns (uint256) {
         if (_level == MembershipLevel.Gold){
             return goldPrice;
@@ -63,4 +90,9 @@ contract MembershipNFT is ERC721, Ownable{
             return bronzePrice;
         }
     }
+
+    function _exists (uint256 tokenID) internal view returns (bool){
+        return ownerOf(tokenID) != address(0);
+    }
+
 }
