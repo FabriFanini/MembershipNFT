@@ -22,6 +22,7 @@ contract MembershipNFT is ERC721Enumerable, Ownable{
     //Events
     event NewMembershipMinted(address indexed to, uint256 tokenID, MembershipLevel level);
     event MembershipRenewed(address indexed to, uint256 tokenID, MembershipLevel level, uint256 expiration);
+    event MembershipBurned(address indexed to, uint256 tokenID);
 
 
     //Variables
@@ -40,7 +41,7 @@ contract MembershipNFT is ERC721Enumerable, Ownable{
         _currentTokenId = 0;
     }
 
-    function mintMembership (MembershipLevel level) external payable onlyOwner
+    function mintMembership (MembershipLevel level) external payable
     {
         uint256 price = getPriceForLevel(level);
 
@@ -57,7 +58,7 @@ contract MembershipNFT is ERC721Enumerable, Ownable{
         emit NewMembershipMinted (msg.sender, _currentTokenId, level);
     }
 
-    function renewMembership(uint256 tokenID) external payable onlyOwner
+    function renewMembership(uint256 tokenID) external payable 
     {
         if (!_exists(tokenID)){
             revert MembershipNonExistentToken();
@@ -102,7 +103,7 @@ contract MembershipNFT is ERC721Enumerable, Ownable{
 
         MembershipLevel level = MembershipLevel.Bronze;
 
-        for(uint256 i = 0; i<balance-1; i++) {
+        for(uint256 i = 0; i < balance; i++) {
             uint256 tokenID = tokenOfOwnerByIndex(_user, i);
             MembershipLevel currentLevel = membershipLevels[tokenID];
 
@@ -111,6 +112,32 @@ contract MembershipNFT is ERC721Enumerable, Ownable{
             }
         }  
         return level; 
+    }
+
+    function burnMembership(uint256 tokenID) external{
+        if (!_exists(tokenID)){
+            revert MembershipNonExistentToken();
+        }
+
+        if (ownerOf(tokenID) != msg.sender){
+            revert MembershipNotTheOwner();
+        }
+
+        _burn(tokenID);
+
+        emit MembershipBurned(msg.sender, tokenID);
+    }
+
+    function isMembershipActive(address _user) external view returns(bool)
+    {
+        uint256 balance = balanceOf(_user);
+
+        if (balance == 0 ){
+            revert MembershipInsufficientBalance();
+        }
+        
+        uint256 tokenID = tokenOfOwnerByIndex(_user, balance-1);
+        return membershipExpiration[tokenID] > block.timestamp;
     }
 
     function withdraw () external onlyOwner {
