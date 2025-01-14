@@ -10,10 +10,10 @@
 pragma solidity  >=0.7.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MembershipNFT is ERC721, Ownable{
+contract MembershipNFT is ERC721Enumerable, Ownable{
     //Errors
     error MembershipInsufficientBalance();
     error MembershipNonExistentToken();
@@ -40,7 +40,7 @@ contract MembershipNFT is ERC721, Ownable{
         _currentTokenId = 0;
     }
 
-    function mintMembership (MembershipLevel level) external payable 
+    function mintMembership (MembershipLevel level) external payable onlyOwner
     {
         uint256 price = getPriceForLevel(level);
 
@@ -57,9 +57,7 @@ contract MembershipNFT is ERC721, Ownable{
         emit NewMembershipMinted (msg.sender, _currentTokenId, level);
     }
 
-    
-
-    function renewMembership(uint256 tokenID) external payable
+    function renewMembership(uint256 tokenID) external payable onlyOwner
     {
         if (!_exists(tokenID)){
             revert MembershipNonExistentToken();
@@ -93,6 +91,30 @@ contract MembershipNFT is ERC721, Ownable{
 
     function _exists (uint256 tokenID) internal view returns (bool){
         return ownerOf(tokenID) != address(0);
+    }
+
+    function checkMembershipLevel(address _user) public view returns (MembershipLevel) {
+        uint256 balance = balanceOf(_user);
+
+        if(balance==0) {
+            revert MembershipInsufficientBalance();
+        }
+
+        MembershipLevel level = MembershipLevel.Bronze;
+
+        for(uint256 i = 0; i<balance-1; i++) {
+            uint256 tokenID = tokenOfOwnerByIndex(_user, i);
+            MembershipLevel currentLevel = membershipLevels[tokenID];
+
+            if(currentLevel>level) {
+                level = currentLevel;
+            }
+        }  
+        return level; 
+    }
+
+    function withdraw () external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }
 
 }
