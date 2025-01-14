@@ -29,4 +29,40 @@ This contract leverages the **OpenZeppelin** library, using standard extensions 
 - Ensures tokens exist before performing operations like renewals or burns.
 - Reverts with errors in case of invalid conditions, such as insufficient balance or lack of ownership.
 
+## How to Deploy and Test the Contract in Remix
+
+### **Step 1: Open Remix**
+1. Go to [Remix IDE](https://remix.ethereum.org/).
+
+### **Step 2: Create a New File**
+1. In the left-hand file explorer, click the "New File" button.
+2. Name the file `MembershipNFT.sol`.
+3. Copy and paste the contract code into this file.
+
+### **Step 3: Configure the Compiler**
+1. Click the **Solidity Compiler** icon (a gear with an "S").
+2. Select a compiler version compatible with the pragma directive in your code (e.g., `v0.8.19`).
+3. Click the **Compile MembershipNFT.sol** button.
+
+### **Step 4: Deploy the Contract**
+1. Click the **Deploy & Run Transactions** icon (a rocket icon).
+2. Under "Environment," select **JavaScript VM (London)** for testing in a local blockchain simulation.
+3. Ensure the `MembershipNFT` contract is selected under the "Contract" dropdown.
+4. Click the **Deploy** button.
+
+### **Step 5: Interact with the Contract**
+1. **Mint Membership:**
+   - Use the `mintMembership` function.
+   - Input a level (`0` for Bronze, `1` for Silver, `2` for Gold) and send the required amount of Ether (`bronzePrice`, `silverPrice`, or `goldPrice`).
+2. **Renew Membership:**
+   - Use the `renewMembership` function with a valid token ID and the required Ether.
+3. **Check Membership Level:**
+   - Use the `checkMembershipLevel` function to see the highest membership level of a specific user.
+4. **Burn Membership:**
+   - Use the `burnMembership` function to destroy a token you own.
+5. **Check Membership Activity:**
+   - Use the `isMembershipActive` function to check if your membership is still valid.
+6. **Withdraw Funds:**
+   - If you are the contract owner, use the `withdraw` function to transfer the contract balance to your wallet.
+
 **Author:** Developed as an educational example for NFT-based systems.
